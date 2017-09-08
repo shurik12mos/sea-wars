@@ -1,0 +1,45 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12 col-md-6 col-lg-3">
+      <div class="ship ship-4" *ngFor="let ship of ships4" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
+        {{ship.length}}
+      </div>
+    </div>
+    <div class="col-sm-12 col-md-6 col-lg-3">
+      <div class="ship ship-3" *ngFor="let ship of ships3" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
+        {{ship.length}}
+      </div>
+    </div>
+    <div class="col-sm-12 col-md-6 col-lg-3">
+      <div class="ship ship-2" *ngFor="let ship of ships2" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
+        {{ship.length}}
+      </div>
+    </div>
+    <div class="col-sm-12 col-md-6 col-lg-3">
+      <div class="ship ship-1" *ngFor="let ship of ships1" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
+        {{ship.length}}
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12 col-md-6">
+      <div class="battle-field own-field" >
+        <div class="battle-row" *ngFor="let row of ownPoles">
+          <div class="battle-pole" *ngFor="let pole of row" droppable (onDrop)="addFigure(pole, $event)" [dropEnabled]="!pole.state"
+            [ngClass]="{'busy': pole.state}">
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="col-sm-12 col-md-6" >
+      <div class="battle-field own-field">
+        <div class="battle-pole" *ngFor="let pole of enemyPoles">
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

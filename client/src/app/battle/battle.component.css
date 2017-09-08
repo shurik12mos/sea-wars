@@ -1,0 +1,50 @@
+.battle-field {
+  width: 400px;
+  height: 400px;
+}
+
+.battle-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  height: 40px;
+}
+
+.battle-pole {
+  display: inline-block;
+  width: 10%;
+  height: 40px;
+  border: 1px solid black;
+  box-sizing: border-box;
+}
+
+.battle-pole.busy {
+  background-color: black;
+}
+
+.ship {
+  height: 40px;
+  box-sizing: border-box;
+  border: 3px solid green;
+}
+
+.ship.error {
+  border-color: red;
+}
+
+.ship-1 {
+  width: 40px;
+}
+
+.ship-2 {
+  width: 80px;
+}
+
+.ship-3 {
+  width: 120px;
+}
+
+.ship-4 {
+  width: 160px;
+}

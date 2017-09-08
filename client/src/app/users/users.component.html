@@ -1,0 +1,45 @@
+<div class="container">
+  <div class="row">
+    <div class="col-s-12">
+      <div class="users-list">
+        <div class="user-item" *ngFor="let user of users">
+          <div class="username">{{user.username}}</div>
+          <div class="user-stats">
+            <span>
+              {{user.battles}}
+            </span>
+            <span>
+              {{user.win}}
+            </span>
+            <span>
+              {{user.loose}}
+            </span>
+          </div>
+          <div class="user-buttons">
+            <button class="btn btn-primary" (click)="askForBattle(user)" [ngClass]="{'disabled': user.busy}">
+              Play
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade"  [ngClass]="{'in': showAskBattleModal, 'show': showAskBattleModal }">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" (click)="closeAskBattleModal(false)" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Ask for battle</h4>
+      </div>
+      <div class="modal-body">
+        <p>{{askUser.username}} propose battle</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="closeAskBattleModal(false)" >Reject</button>
+        <button type="button" class="btn btn-primary" (click)="closeAskBattleModal(true)">Agree</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
