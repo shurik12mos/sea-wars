@@ -1,43 +1,64 @@
 <div class="container">
   <div class="row">
+    <div class="col-sm-12">
+      <div class="timer">
+        <p>{{userTime}}</p>
+        <button class="btn btn-primary" (click)="readyForBattle()">Ready</button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
     <div class="col-sm-12 col-md-6 col-lg-3">
-      <div class="ship ship-4" *ngFor="let ship of ships4" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
-        {{ship.length}}
+      <p *ngIf="ships[4].length">Left 4-line ships: {{ships[4].length}}</p>
+      <div class="ship ship-4" *ngIf="ships[4].length" [ngClass]="{'vertical': ships[4][0].direction === 'vertical'}" [draggable] [dragData]="ships[4][0]"
+           (onDragStart)="startDragShip($event, ships[4][0])" (onDragEnd)="endDragShip($event, ships[4][0])" [dragHandle]="'.drag-handle'">
+        <i class="drag-handle fa fa-bars" aria-hidden="true"></i>
+        <button type="button" class="btn btn-link" (click)="changeOrientation(ships[4][0])"><i class="fa fa-repeat" aria-hidden="true"></i></button>
       </div>
     </div>
     <div class="col-sm-12 col-md-6 col-lg-3">
-      <div class="ship ship-3" *ngFor="let ship of ships3" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
-        {{ship.length}}
+      <p *ngIf="ships[3].length">{{ships[3].length}}</p>
+      <div class="ship ship-3" *ngIf="ships[3].length" [ngClass]="{'vertical': ships[3][0].direction === 'vertical'}" [draggable] [dragData]="ships[3][0]"
+           (onDragStart)="startDragShip($event, ships[3][0])" (onDragEnd)="endDragShip($event, ships[3][0])" [dragHandle]="'.drag-handle'">
+        <i class="drag-handle fa fa-bars" aria-hidden="true"></i>
+        <button type="button" class="btn btn-link" (click)="changeOrientation(ships[3][0])"><i class="fa fa-repeat" aria-hidden="true"></i></button>
       </div>
     </div>
     <div class="col-sm-12 col-md-6 col-lg-3">
-      <div class="ship ship-2" *ngFor="let ship of ships2" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
-        {{ship.length}}
+      <p *ngIf="ships[2].length">{{ships[2].length}}</p>
+      <div class="ship ship-2" *ngIf="ships[2].length" [ngClass]="{'vertical': (ships[2][0].direction === 'vertical')}" [draggable] [dragData]="ships[2][0]"
+           (onDragStart)="startDragShip($event, ships[2][0])" (onDragEnd)="endDragShip($event, ships[2][0])" [dragHandle]="'.drag-handle'">
+        <i class="drag-handle fa fa-bars" aria-hidden="true"></i>
+        <button type="button" class="btn btn-link" (click)="changeOrientation(ships[2][0])"><i class="fa fa-repeat" aria-hidden="true"></i></button>
       </div>
     </div>
     <div class="col-sm-12 col-md-6 col-lg-3">
-      <div class="ship ship-1" *ngFor="let ship of ships1" [ngClass]="{'error': ship.error}" [draggable] [dragData]="ship">
-        {{ship.length}}
+      <p *ngIf="ships[1].length">{{ships[1].length}}</p>
+      <div class="ship ship-1" *ngIf="ships[1].length" [draggable] [dragData]="ships[1][0]"
+           (onDragStart)="startDragShip($event, ships[1][0])" (onDragEnd)="endDragShip($event, ships[1][0])" [dragHandle]="'.drag-handle'">
+        <i class="drag-handle fa fa-bars" aria-hidden="true"></i>
       </div>
     </div>
   </div>
 
   <div class="row">
     <div class="col-sm-12 col-md-6">
-      <div class="battle-field own-field" >
+      <div class="battle-field own-field" [ngClass]="{'error': !isDroppedAlowed}">
         <div class="battle-row" *ngFor="let row of ownPoles">
-          <div class="battle-pole" *ngFor="let pole of row" droppable (onDrop)="addFigure(pole, $event)" [dropEnabled]="!pole.state"
-            [ngClass]="{'busy': pole.state}">
-
+          <div class="battle-pole" *ngFor="let pole of row" droppable (onDragOver)="checkFigure(pole)" (onDrop)="addFigure(pole, $event)" [dropEnabled]="!pole.state && isDroppedAlowed"
+            [ngClass]="{'busy': (pole.state === 1), 'near-busy': (pole.state > 1)}" (onDragLeave)="leaveDragShip(pole)" [dragOverClass]="'drag-ship-over'">
+            <button *ngIf="pole['ship']" class="btn btn-link" (click)="deleteShip(pole)"><i class="fa fa-minus" aria-hidden="true"></i></button>
           </div>
         </div>
 
       </div>
     </div>
     <div class="col-sm-12 col-md-6" >
-      <div class="battle-field own-field">
-        <div class="battle-pole" *ngFor="let pole of enemyPoles">
+      <div class="battle-field enemy-field">
+        <div class="battle-row" *ngFor="let row of enemyPoles">
+          <div class="battle-pole" *ngFor="let pole of row" >
 
+          </div>
         </div>
       </div>
     </div>

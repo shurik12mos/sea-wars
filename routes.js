@@ -10,19 +10,22 @@ const battle = require('./model/battle/router');
     res.json({message: 'Welcome to sea-wars-server API!'});
 });*/
 
-router.use('api/user', user);
-router.use('api/battle', battle);
 
-router.use('*', function(req, res, next) {
-  /*let extension = req.query.match(/.+\.(js|css|jpg|png)$/);
-    if (extension) {
-        next();
-    }else {
-      res.sendFile(__dirname + '/index.html');
-    }*/
-  console.log('request ', req);
+router.use('/api/user', user);
+router.use('/api/battle', battle);
 
-  res.sendFile(__dirname + config.static.client + 'index.html');
+router.get('*', function(req, res, next) {
+    /*let extension = req.query.match(/.+\.(js|css|jpg|png)$/);
+     if (extension) {
+     next();
+     }else {
+     res.sendFile(__dirname + '/index.html');
+     }*/
+    console.log('request ', req);
+
+    res.sendFile(__dirname + config.static.client + 'index.html');
 });
+
+
 
 module.exports = router;

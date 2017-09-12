@@ -2,6 +2,10 @@ import { Component, OnInit } from '@angular/core';
 
 import { Router, NavigationStart, ActivatedRoute } from '@angular/router';
 import { Socket } from 'ng2-socket-io';
+import {Observable} from "rxjs/Observable";
+
+import { AuthHttp, AuthConfig } from 'angular2-jwt';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-battle',
@@ -9,43 +13,67 @@ import { Socket } from 'ng2-socket-io';
   styleUrls: ['./battle.component.css']
 })
 export class BattleComponent implements OnInit {
+  me: any;
   roomId: string;
+  battle: any;
+  userready: boolean = false;
   ownPoles: any;
   enemyPoles: any;
   preparing: boolean = true;
   waitForEnemy: boolean = false;
-  ships4: any = [{id: 41, length: 4}];
-  ships3: any = [{id: 31, length: 3}, {id: 32, length: 3}];
-  ships2: any = [{id: 21, length: 2}, {id: 22, length: 2}, {id: 23, length: 2}];
-  ships1: any = [{id: 11, length: 1}, {id: 12, length: 1}, {id: 13, length: 1}, {id: 14, length: 1}];
+  userReady: boolean = false;
+  userTime: number = 60;
+  ships:any = {
+    1: [{id: 11, length: 1}, {id: 12, length: 1}, {id: 13, length: 1}, {id: 14, length: 1}],
+    2: [{id: 21, length: 2}, {id: 22, length: 2}, {id: 23, length: 2}],
+    3: [{id: 31, length: 3}, {id: 32, length: 3}],
+    4: [{id: 41, length: 4}]
+  };
+
+  readyShips: any = [];
+
+  isDroppedAlowed: boolean = true;
+  draggableElement: any;
+  createdShips: any = {};
 
 
-  constructor(private router: Router, private socket: Socket, private route: ActivatedRoute) {
+  constructor(private router: Router, private socket: Socket, private route: ActivatedRoute, private authService: AuthService) {
     router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.socket.emit('leave room', '');
+        this.socket.removeAllListeners('leave room');
+        this.socket.removeAllListeners('ready timer');
       }
-
     });
 
+    this.me = this.authService.getUserLocal();
+
+    this.roomId = this.route.snapshot.params['id'];
+    console.log('room id ', this.roomId);
+
+    this.joinRoom();
+
+    this.socket.on('battle schema', (data) => {
+
+      this.battle = data;
+      console.log('battle schema', this.battle);
+    });
   }
 
   ngOnInit() {
-    this.socket.fromEvent('leave room')
-      .subscribe(
-        (data) => {
+    this.socket.on('leave room', (data) => {
         console.log('leave room event', data['message']);
         this.socket.emit('leave room', '');
 
-        this.router.navigate(['/list']);
+        this.socket.removeListener('leave room');
+
+        setTimeout(()=> {this.router.navigate(['/list'])}, 5000);
     });
 
     this.ownPoles = this.createPoles();
     this.enemyPoles = this.createPoles();
 
-    this.socket.fromEvent('battle move')
-      .subscribe(
-        (data) => {
+    this.socket.on('battle move', (data) => {
           let move = data['move'],
             result;
 
@@ -54,6 +82,29 @@ export class BattleComponent implements OnInit {
           this.socket.emit('battle move result', {result: result});
         }
       );
+
+
+    this.startReadyTimer();
+  }
+
+  joinRoom(): void {
+    this.socket.emit('join room', {
+      me: this.me,
+      roomId: this.roomId
+    });
+  }
+
+  startReadyTimer(): void {
+    this.socket.on('ready timer', (data) => {
+      console.log('userTimer', data);
+      let time = data;
+      this.userTime = +data;
+    });
+  }
+
+  readyForBattle():void {
+    this.socket.emit('ready for battle', this.readyShips);
+    this.userReady = true;
   }
 
   createPoles(): any {
@@ -62,61 +113,91 @@ export class BattleComponent implements OnInit {
     for (let i = 0; i < 10; i++) {
       pole.push([]);
       for (let j = 0; j < 10; j ++) {
-        pole[i].push({address: ''+i+j, state: 0});
+        pole[i].push({address: ''+i+j, state: 0, ship: null, shipId: null});
       }
     }
 
     return pole;
   }
 
-  checkFigure(pole: any, event: any): boolean {
+  changeOrientation(ship: any):void {
+    ship.direction = (ship.direction === 'vertical')?'horizontal':'vertical';
+  }
+
+  startDragShip(event: any, ship: any): void {
+    this.draggableElement = ship;
+  }
+
+  leaveDragShip(ship: any): void {
+    this.isDroppedAlowed = true;
+  }
+
+  endDragShip(event: any, ship: any): void {
+    this.isDroppedAlowed = true;
+  }
+
+  checkFigure(pole: any): boolean {
+    //debugger;
     let startPosition = pole.address;
+
+    this.isDroppedAlowed = true;
 
     if (!startPosition || !startPosition.match(/\d\d/)) {
       pole.error = true;
+      this.isDroppedAlowed = false;
       return false;
     }
 
-    let length = event.dragData.length,
-        direction = event.dragData.direction || 'vertical';
+    let length = this.draggableElement.length,
+        direction = this.draggableElement.direction || 'horizontal';
 
     let i = parseInt(startPosition[0]),
       j = parseInt(startPosition[1]),
-      start,
-      result = false,
-      row = [];
+      result = false;
 
     if (direction === 'horizontal') {
       if (i > 9 || (j + length -1) > 9) {
         pole.error = true;
+        this.isDroppedAlowed = false;
         return false;
       }
 
-      // check if it already busy
-      for (let l = j; l < j+length; l++) {
-        if (this.ownPoles[i][l] === 1 ) {
-          pole.error = true;
-          return result;
+
+      for (let k = i - 1; k <= i + 1; k++) {
+        if (k < 0 || k > 9) continue;
+        for (let l = j - 1; l <= j+length; l++) {
+          if (l < 0 || l > 9) continue;
+          let a = this.ownPoles[k][l];
+          if (this.ownPoles[k][l].state === 1) {
+            this.isDroppedAlowed = false;
+            return false;
+          }
         }
       }
 
       result = true;
 
     }else {
-      // get part of line
-      for (let l = i; l < i+length; l++) {
-        if (this.ownPoles[l][j] === 1 ) {
-          pole.error = true;
-          return result;
+
+      for (let k = i - 1; k <= i + length; k++) {
+        if (k < 0 || k > 9) continue;
+        for (let l = j - 1; l <= j+1; l++) {
+          if (l < 0 || l > 9) continue;
+          if (this.ownPoles[k][l].state === 1) {
+            this.isDroppedAlowed = false;
+            return false;
+          }
         }
       }
 
       result = true;
     }
 
-    pole.error = true;
+
     return result;
   }
+
+
 
   addFigure(pole: any, event: any): boolean {
     let startPosition = pole.address;
@@ -128,26 +209,81 @@ export class BattleComponent implements OnInit {
     let length = event.dragData.length,
       direction = event.dragData.direction || 'horizontal';
 
-    let i = parseInt(startPosition[0]),
-      j = parseInt(startPosition[1]);
+    let inrow = parseInt(startPosition[0]),
+      incol = parseInt(startPosition[1]);
 
     if (direction === 'horizontal') {
-      for (let l = j; l < j+length; l++) {
-        this.ownPoles[i][l].state = 1;
+      for (let row = inrow - 1; row <= inrow + 1; row++) {
+        if (row < 0 || row > 9) continue;
+        for (let col = incol - 1; col <= incol+length; col++) {
+          if (col < 0 || col > 9) continue;
+
+          if (row === inrow && col >= incol && col < incol+length) {
+            this.ownPoles[row][col].state = 1;
+          }else {
+            this.ownPoles[row][col].state += 2;
+          }
+        }
       }
     }else {
-      for (let l = i; l < i+length; l++) {
-        this.ownPoles[l][j].state = 1;
+      for (let row = inrow - 1; row <= inrow + length; row++) {
+        if (row < 0 || row > 9) continue;
+        for (let col = incol - 1; col <= incol+1; col++) {
+          if (col < 0 || col > 9) continue;
+
+          if (col === incol && row >= inrow && row < inrow+length) {
+            this.ownPoles[row][col].state = 1;
+            this.ownPoles[row][col].shipId = this.draggableElement.id;
+          }else {
+            this.ownPoles[row][col].state += 2;
+          }
+        }
       }
     }
 
+    // copy object
+    pole.ship = Object.assign({}, this.draggableElement);
+    this.readyShips.push(pole.ship);
+
     // remove ship
-    let shipEl = 'ships' + event.dragData.id.toString()[0];
-    this[shipEl] = this[shipEl].filter((item) => {
-      return item.id !== event.dragData.id;
+    this.ships[this.draggableElement.length] = this.ships[this.draggableElement.length].filter((item) => {
+      return item.id !== this.draggableElement.id;
     });
 
+    this.draggableElement = null;
+
+    console.log(this.readyShips, pole.ship);
+
     return true;
+  }
+
+  deleteShip(pole: any) {
+    //clean pole for this ship
+    let poleRow = +pole.address[0],
+        poleCol = +pole.address[1],
+        startRow = (+pole.address[0] - 1)<0?+pole.address[0]:+pole.address[0] - 1,
+        endRow = (pole.ship.direction === 'horizontal')?poleRow+pole.ship.length:poleRow+1,
+        startCol = (+pole.address[1] - 1)<0?+pole.address[1]:+pole.address[1] - 1,
+        endCol = (pole.ship.direction === 'horizontal')?poleCol + 1:poleCol+pole.ship.length;
+
+    //add ship to this.ships
+    this.ships[pole.ship.length].push(pole.ship);
+
+    for(let i = startRow; i <= endRow; i++) {
+      if (i < 0 || i > 9) continue;
+      for (let j = startCol; j <= endCol; j++) {
+        if (j < 0 || j > 9) continue;
+        if (this.ownPoles[i][j].state === 1) {
+          this.ownPoles[i][j].state = 0;
+          this.ownPoles[i][j].ship = null;
+        }else if (this.ownPoles[i][j].state > 1) {
+          this.ownPoles[i][j].state -= 2;
+        }
+      }
+    }
+
+
+
   }
 
   setShootOwn(shoot: string): boolean {
@@ -172,9 +308,7 @@ export class BattleComponent implements OnInit {
 
    this.socket.emit('battle move', {move: shoot});
 
-   this.socket.fromEvent('battle move result')
-      .subscribe(
-        (data) => {
+   this.socket.on('battle move result', (data) => {
           let result = data['result'];
 
           this.enemyPoles[i][j] = parseInt(result);

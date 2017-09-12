@@ -37,9 +37,7 @@ export class UsersComponent implements OnInit {
       }
     );
 
-    this.socket.fromEvent('change list')
-      .subscribe(
-        (data) => {
+    this.socket.on('change list', (data) => {
           let users = data['users'];
 
           users = users.filter(
@@ -53,9 +51,7 @@ export class UsersComponent implements OnInit {
         }
       );
 
-    this.socket.fromEvent('busy users')
-      .subscribe(
-        (data) => {
+    this.socket.on('busy users', (data) => {
           let users = data['users'],
             busy = users[0].busy;
 
@@ -70,9 +66,7 @@ export class UsersComponent implements OnInit {
         }
       );
 
-    this.socket.fromEvent('ask battle')
-      .subscribe(
-        (data) => {
+    this.socket.on('ask battle', (data) => {
           console.log('ask battle ', data);
           this.askUser = data['user'];
 

@@ -3,7 +3,7 @@ const battleController = require('../model/battle/controller');
 function socketModule(io) {
     let usersList = [];
     io.on('connection', function (socket) {
-        console.log('a user connected');
+        console.log('a user connected ', socket.id);
 
         socket.on('disconnect', (reason, a) => {
             console.log('a user disconnected by ' + reason + a);
@@ -17,6 +17,23 @@ function socketModule(io) {
             console.log('disconnect  ', usersList, socket.id);
 
             io.emit('change list', {users: usersList});
+
+
+            // tell user in room that opponnent disconnected
+            let roomId = Object.keys(socket.rooms)[1];
+
+            setTimeout(()=> {
+                io.of('/').in(roomId).clients((error, clients) => {
+                    if (error) throw error;
+
+                    if (clients.length < 2) {
+                        io.of('/').in(roomId).emit('leave room', {message: 'Opponent disconnected'});
+                        console.log('leave room by dissconnect', roomId, clients);
+                    }
+                });
+            }, 10000);
+
+
         });
 
         socket.on('add to list', (data) => {
@@ -34,6 +51,9 @@ function socketModule(io) {
             }else {
                 user.busy = false;
             }
+
+            user.busy = false;
+
 
             usersList.forEach((item, i, arr) => {
                if (item._id === user._id) {
@@ -94,6 +114,19 @@ function socketModule(io) {
                             }
                         });
                         io.emit('busy users', {users: [player1, player2]});
+
+                        //send timer for users
+                        let time = 60;
+                        let timer = setInterval(() => {
+                            time -= 1;
+                            if (time > 0) {
+                                io.to(player1.socketId ).emit('ready timer', time);
+                                io.to(player2.socketId ).emit('ready timer', time);
+                            }else {
+                                clearInterval(timer);
+                            }
+
+                        }, 1000);
                     }
                 );
 
@@ -109,31 +142,38 @@ function socketModule(io) {
 
         });
 
+        socket.on('ready for battle', (data) => {
+
+        });
+
         socket.on('battle move', (data) => {
             let roomId = Object.keys(socket.rooms)[1],
                 move = data.move;
 
-            if (roomId) {
-                io.of('/').in(roomId).clients((error, clients) => {
-                    let clientsInRoom = 0;
-                    if (error) throw error;
-                    console.log('clients2 ', clients, clients.length); // => [Anw2LatarvGVVXEIAAAD]
-                    clientsInRoom = clients.length;
 
+        });
 
-                    if (clientsInRoom < 2) {
-                        console.log('before join ', clientsInRoom);
-                        socket.join(data.battle, () => {
-                            socket.to(data.battle).emit('user connected', {message: 'User ' + data.username + ' is connected'});
-                        });
-                    } else {
-                        console.log('socket.id ', socket.id);
-                        io.to(socket.id).emit('room full', {message: 'Room is full'});
+        socket.on('join room', (data) => {
+            console.log('join room', data);
+
+            let roomId = data.roomId,
+                user = data.me;
+
+            socket.join(roomId);
+
+            battleController.findById(roomId)
+                .then(
+                    (success) => {
+                        let battle = success;
+
+                        io.to(socket.id).emit('battle schema', battle);
+
+                        console.log('find battle ok', success);
+                    },
+                    (err) => {
+                        console.log('find battle bad', err);
                     }
-                });
-
-
-            }
+                );
         });
 
         socket.on('leave room', (data) => {
@@ -142,6 +182,7 @@ function socketModule(io) {
             socket.leave(data.roomId);
 
             io.of('/').in(roomId).emit('leave room', {message: 'Opponent leave the battle or disconnected'});
+
             console.log('leave room ', roomId);
         });
 

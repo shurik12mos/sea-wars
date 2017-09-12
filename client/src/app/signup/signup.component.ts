@@ -25,8 +25,9 @@ export class SignupComponent implements OnInit {
   }
 
   signup(): void{
-    console.log('password match - ', this.model.password !== this.model.repeatPassword, this.model.password, this.model.repeatPassword);
+
     if (this.model.password !== this.model.repeatPassword) {
+      console.log('password match - ', this.model.password == this.model.repeatPassword, this.model.password, this.model.repeatPassword);
       return;
     }
 

@@ -6,6 +6,10 @@ class BattleController extends Controller {
         return this.facade.create(val);
 
     }
+
+    findById(id) {
+        return this.facade.findById(id);
+    }
 }
 
 module.exports = new BattleController(battleFacade);

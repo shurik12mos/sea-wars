@@ -9,7 +9,7 @@ const battleSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['wait', 'in progress', 'disconnected', 'end'],
+    enum: ['wait', 'in progress', 'start', 'disconnected', 'end'],
     default: 'wait'
   },
   player1: {

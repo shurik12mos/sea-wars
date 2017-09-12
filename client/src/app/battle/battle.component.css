@@ -1,6 +1,12 @@
 .battle-field {
   width: 400px;
   height: 400px;
+  border: 2px solid transparent;
+  box-sizing: content-box;
+}
+
+.battle-field.error{
+  border: 2px solid red;
 }
 
 .battle-row {
@@ -15,36 +21,98 @@
   display: inline-block;
   width: 10%;
   height: 40px;
-  border: 1px solid black;
+  border: 2px solid #000;
   box-sizing: border-box;
 }
+
+
 
 .battle-pole.busy {
-  background-color: black;
+  background-color: #404d99;
 }
 
+.battle-pole.near-busy {
+background-color: #999;
+}
+
+
 .ship {
-  height: 40px;
   box-sizing: border-box;
+  background-color: #404d99;
   border: 3px solid green;
 }
 
-.ship.error {
-  border-color: red;
+.ship i {
+  display: inline-block;
+  margin-left: 5px;
+  line-height: 40px;
+}
+
+.ship button {
+  float: right;
+  line-height: 40px;
+  margin-right: 5px;
+  display: none;
+  color: #000;
+  padding: 0;
+}
+
+.ship button:hover {
+  color: #000;
+}
+
+.ship:hover button {
+  display: inline-block;
+}
+
+.ship.drag-border {
+  border: 3px solid #000;
+}
+
+.ship.drag-border.error {
+  border: 3px solid red;
 }
 
 .ship-1 {
   width: 40px;
+  height: 40px;
 }
 
 .ship-2 {
   width: 80px;
+  height: 40px;
 }
 
 .ship-3 {
   width: 120px;
+  height: 40px;
 }
 
 .ship-4 {
   width: 160px;
+  height: 40px;
+}
+
+.ship-1.vertical {
+  height: 40px;
+  width: 40px;
+}
+
+.ship-2.vertical {
+  height: 80px;
+  width: 40px;
+}
+
+.ship-3.vertical {
+  height: 120px;
+  width: 40px;
+}
+
+.ship-4.vertical {
+  height: 160px;
+  width: 40px;
+}
+
+.timer {
+  text-align: center;
 }
